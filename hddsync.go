@@ -9,32 +9,51 @@ import (
 )
 
 func main() {
+	// Load the .env file
 	err := loadEnv(".env")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	// from .env
+	// Get paths from environment variables
 	source := os.Getenv("SOURCE")
 	destination := os.Getenv("DESTINATION")
 	foldersStr := os.Getenv("FOLDERS")
 
+	// Split FOLDERS environment variable to create a list of folders
 	folders := strings.Split(foldersStr, ",")
 
-	// Exec rsync
+	// Confirm HDD and folders to sync
+	fmt.Printf("Source: %s\n", source)
+	fmt.Printf("Destination: %s\n", destination)
+	fmt.Printf("Folders to sync: %v\n", folders)
+	fmt.Print("Do you want to start sync with these settings? (y/n): ")
+
+	// Wait for user input
+	reader := bufio.NewReader(os.Stdin)
+	response, _ := reader.ReadString('\n')
+	if strings.TrimSpace(response) != "y" {
+		fmt.Println("Sync cancelled.")
+		os.Exit(0)
+	}
+
+	// Execute rsync for each folder
 	for _, folder := range folders {
-		cmd := exec.Command("rsync", "-avz", "--partial", "--delete", source+folder+"/", destination+folder+"/")
+		cmd := exec.Command("rsync", "-avzP", "--partial", "--delete", source+folder+"/", destination+folder+"/")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		if err != nil {
-			fmt.Printf("Failed to sync: %s\n", folder)
+			fmt.Printf("Error occurred during sync: %s\n", folder)
 			os.Exit(1)
 		}
 	}
 
-	fmt.Println("Finished!")
+	fmt.Println("Sync completed")
 }
 
+// Function to load .env file
 func loadEnv(filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
