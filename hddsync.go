@@ -40,7 +40,7 @@ func main() {
 
 	// Execute rsync for each folder
 	for _, folder := range folders {
-		cmd := exec.Command("rsync", "-avzP", "--partial", "--delete", source+folder+"/", destination+folder+"/")
+		cmd := exec.Command("rsync", "-avzP", "--partial", "--delete", "--exclude", ".DS_Store", source+folder+"/", destination+folder+"/")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
