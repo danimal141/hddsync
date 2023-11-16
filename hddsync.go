@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -38,15 +39,24 @@ func main() {
 		os.Exit(0)
 	}
 
+	// logging
+	logFile, err := os.OpenFile("rsync_errors.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal("Error opening log file:", err)
+	}
+	defer logFile.Close()
+
 	// Execute rsync for each folder
 	for _, folder := range folders {
-		cmd := exec.Command("rsync", "-avzP", "--partial", "--delete", "--exclude", ".DS_Store", source+folder+"/", destination+folder+"/")
+		cmd := exec.Command("rsync", "-avzPv", "--partial", "--delete", "--exclude", ".DS_Store", source+folder+"/", destination+folder+"/")
 		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		// cmd.Stderr = os.Stderr
+		cmd.Stderr = logFile
 		err := cmd.Run()
 		if err != nil {
 			fmt.Printf("Error occurred during sync: %s\n", folder)
-			os.Exit(1)
+			// do not stop
+			// os.Exit(1)
 		}
 	}
 
